@@ -18,7 +18,7 @@
 
 import debounce = require('lodash.debounce');
 import { injectable, inject } from 'inversify';
-import { TabBar, Widget } from '@phosphor/widgets';
+import { TabBar, Title, Widget } from '@phosphor/widgets';
 import { MAIN_MENU_BAR, SETTINGS_MENU, MenuContribution, MenuModelRegistry, ACCOUNTS_MENU } from '../common/menu';
 import { KeybindingContribution, KeybindingRegistry } from './keybinding';
 import { FrontendApplication, FrontendApplicationContribution } from './frontend-application';
@@ -214,6 +214,16 @@ export namespace CommonCommands {
         id: 'core.toggle.bottom.panel',
         category: VIEW_CATEGORY,
         label: 'Toggle Bottom Panel'
+    };
+    export const PIN_TAB: Command = {
+        id: 'core.pin.tab',
+        category: VIEW_CATEGORY,
+        label: 'Pin Tab'
+    };
+    export const UNPIN_TAB: Command = {
+        id: 'core.unpin.tab',
+        category: VIEW_CATEGORY,
+        label: 'Unpin Tab'
     };
     export const TOGGLE_MAXIMIZED: Command = {
         id: 'core.toggleMaximized',
@@ -536,6 +546,16 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
             label: 'Toggle Maximized',
             order: '5'
         });
+        registry.registerMenuAction(SHELL_TABBAR_CONTEXT_MENU, {
+            commandId: CommonCommands.PIN_TAB.id,
+            label: 'Pin',
+            order: '7'
+        });
+        registry.registerMenuAction(SHELL_TABBAR_CONTEXT_MENU, {
+            commandId: CommonCommands.UNPIN_TAB.id,
+            label: 'Unpin',
+            order: '8'
+        });
         registry.registerMenuAction(CommonMenus.HELP, {
             commandId: CommonCommands.ABOUT_COMMAND.id,
             label: 'About',
@@ -774,6 +794,64 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         commandRegistry.registerCommand(CommonCommands.SELECT_ICON_THEME, {
             execute: () => this.selectIconTheme()
         });
+
+        commandRegistry.registerCommand(CommonCommands.PIN_TAB, {
+            isEnabled: (event?: Event) => {
+                const tabBar = this.shell.findTabBar(event);
+                if (!tabBar) {
+                    return false;
+                }
+                const currentTitle = this.shell.findTitle(tabBar, event);
+                return currentTitle !== undefined && currentTitle.closable;
+            },
+            execute: (event?: Event) => {
+                const tabBar = this.shell.findTabBar(event)!;
+                const currentTitle = this.shell.findTitle(tabBar, event);
+                if (!currentTitle) {
+                    return;
+                }
+                currentTitle.closable = false;
+                this.setPinned(currentTitle, true);
+
+                let i = this.findTitleIndex(tabBar, event) - 1;
+                while (i >= 0) {
+                    if (this.isPinned(tabBar.titles[i])) {
+                        break;
+                    }
+                    i--;
+                }
+                tabBar.insertTab(i + 1, currentTitle);
+            },
+        });
+        commandRegistry.registerCommand(CommonCommands.UNPIN_TAB, {
+            isEnabled: (event?: Event) => {
+                const tabBar = this.shell.findTabBar(event);
+                if (!tabBar) {
+                    return false;
+                }
+                const currentTitle = this.shell.findTitle(tabBar, event);
+                return currentTitle !== undefined && !currentTitle.closable && this.isPinned(currentTitle);
+            },
+            execute: (event?: Event) => {
+                const tabBar = this.shell.findTabBar(event)!;
+                const currentTitle = this.shell.findTitle(tabBar, event);
+                if (!currentTitle) {
+                    return;
+                }
+
+                currentTitle.closable = true;
+                this.setPinned(currentTitle, false);
+
+                // Keep pinned tabs left
+                const move: Title<Widget>[] = [];
+                tabBar.titles.forEach((title, index) => {
+                    if (index > tabBar.currentIndex && this.isPinned(title)) {
+                        move.push(title);
+                    }
+                });
+                move.forEach(t => tabBar.insertTab(tabBar.currentIndex, t));
+            },
+        });
     }
 
     private findTabArea(event?: Event): ApplicationShell.Area | undefined {
@@ -835,6 +913,16 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
 
     private isElectron(): boolean {
         return environment.electron.is();
+    }
+
+    private isPinned(title: Title<Widget>): boolean {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (title as any).pinned;
+    }
+
+    private setPinned(title: Title<Widget>, pinned: boolean): void {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (title as any).pinned = pinned;
     }
 
     registerKeybindings(registry: KeybindingRegistry): void {
