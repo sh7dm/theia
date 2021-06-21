@@ -242,11 +242,11 @@ body.theia-editor-highlightModifiedTabs
 }
 
 .p-TabBar.theia-app-centers .p-TabBar-tab.theia-mod-pinned > .p-TabBar-tabCloseIcon {
-  background-image: var(--theia-icon-pinned);
+  background-image: var(--theia-icon-pinned); /* TODO: replace with codicons after Monaco update #9154 */
 }
 
 .p-TabBar.theia-app-centers .p-TabBar-tab.theia-mod-pinned.theia-mod-dirty > .p-TabBar-tabCloseIcon {
-  background-image: var(--theia-icon-pinned-dirty);
+  background-image: var(--theia-icon-pinned-dirty); /* TODO: replace with codicons after Monaco update #9154 */
 }
 
 .p-TabBar-tabIcon.no-icon {
