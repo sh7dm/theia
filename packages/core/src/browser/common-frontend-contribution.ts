@@ -32,7 +32,7 @@ import { SHELL_TABBAR_CONTEXT_MENU } from './shell/tab-bars';
 import { AboutDialog } from './about-dialog';
 import * as browser from './browser';
 import URI from '../common/uri';
-import { ContextKeyService } from './context-key-service';
+import { ContextKey, ContextKeyService } from './context-key-service';
 import { OS, isOSX, isWindows } from '../common/os';
 import { ResourceContextKey } from './resource-context-key';
 import { UriSelection } from '../common/selection';
@@ -349,6 +349,8 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
     @inject(AuthenticationService)
     protected readonly authenticationService: AuthenticationService;
 
+    protected pinnedKey: ContextKey<boolean>;
+
     async configure(app: FrontendApplication): Promise<void> {
         const configDirUri = await this.environments.getConfigDirUri();
         // Global settings
@@ -361,6 +363,10 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         this.contextKeyService.createKey<boolean>('isMac', OS.type() === OS.Type.OSX);
         this.contextKeyService.createKey<boolean>('isWindows', OS.type() === OS.Type.Windows);
         this.contextKeyService.createKey<boolean>('isWeb', !this.isElectron());
+
+        this.pinnedKey = this.contextKeyService.createKey<boolean>('activeEditorIsPinned', false);
+        this.updatePinnedKey();
+        this.shell.activeChanged.connect(() => this.updatePinnedKey());
 
         this.initResourceContextKeys();
         this.registerCtrlWHandling();
@@ -407,6 +413,10 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         if (this.preferences['workbench.editor.highlightModifiedTabs']) {
             document.body.classList.add('theia-editor-highlightModifiedTabs');
         }
+    }
+
+    protected updatePinnedKey(): void {
+        this.pinnedKey.set(this.shell.activeWidget && this.isPinned(this.shell.activeWidget.title));
     }
 
     protected updateThemePreference(preferenceName: 'workbench.colorTheme' | 'workbench.iconTheme'): void {
@@ -930,6 +940,8 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         if (pinned) {
             title.className += ` ${PINNED_CLASS}`;
         }
+
+        this.updatePinnedKey();
     }
 
     registerKeybindings(registry: KeybindingRegistry): void {
@@ -1044,11 +1056,13 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
             },
             {
                 command: CommonCommands.PIN_TAB.id,
-                keybinding: 'ctrlcmd+k shift+enter'
+                keybinding: 'ctrlcmd+k shift+enter',
+                when: '!activeEditorIsPinned'
             },
             {
                 command: CommonCommands.UNPIN_TAB.id,
-                keybinding: 'ctrlcmd+k ctrlcmd+shift+enter'
+                keybinding: 'ctrlcmd+k shift+enter',
+                when: 'activeEditorIsPinned'
             }
         );
     }
