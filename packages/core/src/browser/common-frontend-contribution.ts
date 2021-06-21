@@ -216,9 +216,14 @@ export namespace CommonCommands {
         label: 'Toggle Bottom Panel'
     };
     export const PIN_TAB: Command = {
-        id: 'core.pin-unpin.tab',
+        id: 'core.pin.tab',
         category: VIEW_CATEGORY,
-        label: 'Pin/Unpin Current Tab'
+        label: 'Pin Tab'
+    };
+    export const UNPIN_TAB: Command = {
+        id: 'core.unpin.tab',
+        category: VIEW_CATEGORY,
+        label: 'Unpin Tab'
     };
     export const TOGGLE_MAXIMIZED: Command = {
         id: 'core.toggleMaximized',
@@ -545,8 +550,13 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         });
         registry.registerMenuAction(SHELL_TABBAR_CONTEXT_MENU, {
             commandId: CommonCommands.PIN_TAB.id,
-            label: 'Pin/unpin',
+            label: 'Pin',
             order: '7'
+        });
+        registry.registerMenuAction(SHELL_TABBAR_CONTEXT_MENU, {
+            commandId: CommonCommands.UNPIN_TAB.id,
+            label: 'Unpin',
+            order: '8'
         });
         registry.registerMenuAction(CommonMenus.HELP, {
             commandId: CommonCommands.ABOUT_COMMAND.id,
@@ -794,7 +804,35 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
                     return false;
                 }
                 const currentTitle = this.shell.findTitle(tabBar, event);
-                return currentTitle !== undefined && (currentTitle.closable || this.isPinned(currentTitle));
+                return currentTitle !== undefined && currentTitle.closable;
+            },
+            execute: (event?: Event) => {
+                const tabBar = this.shell.findTabBar(event)!;
+                const currentTitle = this.shell.findTitle(tabBar, event);
+                if (!currentTitle) {
+                    return;
+                }
+                currentTitle.closable = false;
+                this.setPinned(currentTitle, true);
+
+                let i = this.findTitleIndex(tabBar, event) - 1;
+                while (i >= 0) {
+                    if (this.isPinned(tabBar.titles[i])) {
+                        break;
+                    }
+                    i--;
+                }
+                tabBar.insertTab(i + 1, currentTitle);
+            },
+        });
+        commandRegistry.registerCommand(CommonCommands.UNPIN_TAB, {
+            isEnabled: (event?: Event) => {
+                const tabBar = this.shell.findTabBar(event);
+                if (!tabBar) {
+                    return false;
+                }
+                const currentTitle = this.shell.findTitle(tabBar, event);
+                return currentTitle !== undefined && !currentTitle.closable && this.isPinned(currentTitle);
             },
             execute: (event?: Event) => {
                 const tabBar = this.shell.findTabBar(event)!;
@@ -803,29 +841,17 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
                     return;
                 }
 
-                const pinned = !this.isPinned(currentTitle);
-                currentTitle.closable = !pinned;
-                this.setPinned(currentTitle, pinned);
+                currentTitle.closable = true;
+                this.setPinned(currentTitle, false);
 
-                if (pinned) {
-                    let i = this.findTitleIndex(tabBar, event) - 1;
-                    while (i >= 0) {
-                        if (this.isPinned(tabBar.titles[i])) {
-                            break;
-                        }
-                        i--;
+                // Keep pinned tabs left
+                const move: Title<Widget>[] = [];
+                tabBar.titles.forEach((title, index) => {
+                    if (index > tabBar.currentIndex && this.isPinned(title)) {
+                        move.push(title);
                     }
-                    tabBar.insertTab(i + 1, currentTitle);
-                } else {
-                    // Keep pinned tabs left
-                    const move: Title<Widget>[] = [];
-                    tabBar.titles.forEach((title, index) => {
-                        if (index > tabBar.currentIndex && this.isPinned(title)) {
-                            move.push(title);
-                        }
-                    });
-                    move.forEach(t => tabBar.insertTab(tabBar.currentIndex, t));
-                }
+                });
+                move.forEach(t => tabBar.insertTab(tabBar.currentIndex, t));
             },
         });
     }
@@ -1019,6 +1045,10 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
             {
                 command: CommonCommands.PIN_TAB.id,
                 keybinding: 'ctrlcmd+k shift+enter'
+            },
+            {
+                command: CommonCommands.UNPIN_TAB.id,
+                keybinding: 'ctrlcmd+k ctrlcmd+shift+enter'
             }
         );
     }
