@@ -1041,6 +1041,14 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
             {
                 command: CommonCommands.SELECT_COLOR_THEME.id,
                 keybinding: 'ctrlcmd+k ctrlcmd+t'
+            },
+            {
+                command: CommonCommands.PIN_TAB.id,
+                keybinding: 'ctrlcmd+k shift+enter'
+            },
+            {
+                command: CommonCommands.UNPIN_TAB.id,
+                keybinding: 'ctrlcmd+k ctrlcmd+shift+enter'
             }
         );
     }
