@@ -291,6 +291,8 @@ export const supportPaste = browser.isNative || (!browser.isChrome && document.q
 
 export const RECENT_COMMANDS_STORAGE_KEY = 'commands';
 
+const PINNED_CLASS = 'theia-mod-pinned';
+
 @injectable()
 export class CommonFrontendContribution implements FrontendApplicationContribution, MenuContribution, CommandContribution, KeybindingContribution, ColorContribution {
 
@@ -923,6 +925,11 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
     private setPinned(title: Title<Widget>, pinned: boolean): void {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (title as any).pinned = pinned;
+
+        title.className = title.className.replace(` ${PINNED_CLASS}`, '');
+        if (pinned) {
+            title.className += ` ${PINNED_CLASS}`;
+        }
     }
 
     registerKeybindings(registry: KeybindingRegistry): void {
