@@ -216,12 +216,12 @@ export namespace CommonCommands {
         label: 'Toggle Bottom Panel'
     };
     export const PIN_TAB: Command = {
-        id: 'core.pin.tab',
+        id: 'workbench.action.pinEditor',
         category: VIEW_CATEGORY,
         label: 'Pin Tab'
     };
     export const UNPIN_TAB: Command = {
-        id: 'core.unpin.tab',
+        id: 'workbench.action.unpinEditor',
         category: VIEW_CATEGORY,
         label: 'Unpin Tab'
     };
