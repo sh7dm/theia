@@ -1061,12 +1061,12 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
             {
                 command: CommonCommands.PIN_TAB.id,
                 keybinding: 'ctrlcmd+k shift+enter',
-                when: '!activeEditorIsPinned'
+                when: '!activeWidgetIsPinned'
             },
             {
                 command: CommonCommands.UNPIN_TAB.id,
                 keybinding: 'ctrlcmd+k shift+enter',
-                when: 'activeEditorIsPinned'
+                when: 'activeWidgetIsPinned'
             }
         );
     }
