@@ -813,17 +813,13 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         });
 
         commandRegistry.registerCommand(CommonCommands.PIN_TAB, {
-            isEnabled: (event?: Event) => {
+            isEnabled: (event?: Event) => !!this.shell.findTargetedWidget(event)?.title.closable,
+            execute: (event?: Event) => {
                 const tabBar = this.shell.findTabBar(event);
                 if (!tabBar) {
-                    return false;
+                    return;
                 }
-                const currentTitle = this.shell.findTitle(tabBar, event);
-                return currentTitle !== undefined && currentTitle.closable;
-            },
-            execute: (event?: Event) => {
-                const tabBar = this.shell.findTabBar(event)!;
-                const currentTitle = this.shell.findTitle(tabBar, event);
+                const currentTitle = this.shell.findTargetedWidget(event)?.title;
                 if (!currentTitle) {
                     return;
                 }
@@ -842,16 +838,15 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         });
         commandRegistry.registerCommand(CommonCommands.UNPIN_TAB, {
             isEnabled: (event?: Event) => {
-                const tabBar = this.shell.findTabBar(event);
-                if (!tabBar) {
-                    return false;
-                }
-                const currentTitle = this.shell.findTitle(tabBar, event);
-                return currentTitle !== undefined && !currentTitle.closable && currentTitle.pinned || false;
+                const currentTitle = this.shell.findTargetedWidget(event)?.title as TheiaTitle;
+                return currentTitle !== undefined && !currentTitle.closable && !!currentTitle.pinned;
             },
             execute: (event?: Event) => {
                 const tabBar = this.shell.findTabBar(event)!;
-                const currentTitle = this.shell.findTitle(tabBar, event);
+                if (!tabBar) {
+                    return;
+                }
+                const currentTitle = this.shell.findTargetedWidget(event)?.title;
                 if (!currentTitle) {
                     return;
                 }
