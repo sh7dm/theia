@@ -850,6 +850,7 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
                 if (!currentTitle) {
                     return;
                 }
+                const currentIndex = this.findTitleIndex(tabBar, event);
 
                 currentTitle.closable = true;
                 this.setPinned(currentTitle, false);
@@ -857,11 +858,11 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
                 // Keep pinned tabs left
                 const move: TheiaTitle[] = [];
                 tabBar.titles.forEach((title: TheiaTitle, index) => {
-                    if (index > tabBar.currentIndex && title.pinned) {
+                    if (index > currentIndex && title.pinned) {
                         move.push(title);
                     }
                 });
-                move.forEach(t => tabBar.insertTab(tabBar.currentIndex, t));
+                move.reverse().forEach(t => tabBar.insertTab(currentIndex, t));
             },
         });
     }
