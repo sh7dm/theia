@@ -18,7 +18,7 @@
 
 import debounce = require('lodash.debounce');
 import { injectable, inject } from 'inversify';
-import { TabBar, Title, Widget } from '@phosphor/widgets';
+import { TabBar, Widget } from '@phosphor/widgets';
 import { MAIN_MENU_BAR, SETTINGS_MENU, MenuContribution, MenuModelRegistry, ACCOUNTS_MENU } from '../common/menu';
 import { KeybindingContribution, KeybindingRegistry } from './keybinding';
 import { FrontendApplication, FrontendApplicationContribution } from './frontend-application';
@@ -53,6 +53,7 @@ import { UTF8 } from '../common/encodings';
 import { EnvVariablesServer } from '../common/env-variables';
 import { AuthenticationService } from './authentication-service';
 import { FormatType } from './saveable';
+import { TheiaTitle } from './widgets';
 
 export namespace CommonMenus {
 
@@ -418,7 +419,7 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
     }
 
     protected updatePinnedKey(): void {
-        const value = this.shell.activeWidget && this.isPinned(this.shell.activeWidget.title);
+        const value = this.shell.activeWidget && (this.shell.activeWidget.title as TheiaTitle).pinned;
         this.pinnedKey.set(value);
         this.pinnedKeyCompat.set(value);
     }
@@ -831,7 +832,7 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
 
                 let i = this.findTitleIndex(tabBar, event) - 1;
                 while (i >= 0) {
-                    if (this.isPinned(tabBar.titles[i])) {
+                    if ((tabBar.titles[i] as TheiaTitle).pinned) {
                         break;
                     }
                     i--;
@@ -846,7 +847,7 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
                     return false;
                 }
                 const currentTitle = this.shell.findTitle(tabBar, event);
-                return currentTitle !== undefined && !currentTitle.closable && this.isPinned(currentTitle);
+                return currentTitle !== undefined && !currentTitle.closable && currentTitle.pinned || false;
             },
             execute: (event?: Event) => {
                 const tabBar = this.shell.findTabBar(event)!;
@@ -859,9 +860,9 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
                 this.setPinned(currentTitle, false);
 
                 // Keep pinned tabs left
-                const move: Title<Widget>[] = [];
-                tabBar.titles.forEach((title, index) => {
-                    if (index > tabBar.currentIndex && this.isPinned(title)) {
+                const move: TheiaTitle[] = [];
+                tabBar.titles.forEach((title: TheiaTitle, index) => {
+                    if (index > tabBar.currentIndex && title.pinned) {
                         move.push(title);
                     }
                 });
@@ -931,14 +932,8 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
         return environment.electron.is();
     }
 
-    private isPinned(title: Title<Widget>): boolean {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (title as any).pinned;
-    }
-
-    private setPinned(title: Title<Widget>, pinned: boolean): void {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (title as any).pinned = pinned;
+    private setPinned(title: TheiaTitle, pinned: boolean): void {
+        title.pinned = pinned;
 
         title.className = title.className.replace(` ${PINNED_CLASS}`, '');
         if (pinned) {
