@@ -825,15 +825,6 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
                 }
                 currentTitle.closable = false;
                 this.setPinned(currentTitle, true);
-
-                let i = this.findTitleIndex(tabBar, event) - 1;
-                while (i >= 0) {
-                    if ((tabBar.titles[i] as TheiaTitle).pinned) {
-                        break;
-                    }
-                    i--;
-                }
-                tabBar.insertTab(i + 1, currentTitle);
             },
         });
         commandRegistry.registerCommand(CommonCommands.UNPIN_TAB, {
@@ -850,19 +841,9 @@ export class CommonFrontendContribution implements FrontendApplicationContributi
                 if (!currentTitle) {
                     return;
                 }
-                const currentIndex = this.findTitleIndex(tabBar, event);
 
                 currentTitle.closable = true;
                 this.setPinned(currentTitle, false);
-
-                // Keep pinned tabs left
-                const move: TheiaTitle[] = [];
-                tabBar.titles.forEach((title: TheiaTitle, index) => {
-                    if (index > currentIndex && title.pinned) {
-                        move.push(title);
-                    }
-                });
-                move.reverse().forEach(t => tabBar.insertTab(currentIndex, t));
             },
         });
     }
