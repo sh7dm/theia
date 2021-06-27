@@ -41,7 +41,7 @@ export const DEFAULT_SCROLL_OPTIONS: PerfectScrollbar.Options = {
     minScrollbarLength: 35,
 };
 
-export class TheiaTitle extends Title<Widget> {
+export class TheiaTitle<T = Widget> extends Title<T> {
     pinned?: boolean;
 }
 
