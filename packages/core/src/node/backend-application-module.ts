@@ -32,6 +32,9 @@ import { QuickPickService, quickPickServicePath } from '../common/quick-pick-ser
 import { WsRequestValidator, WsRequestValidatorContribution } from './ws-request-validators';
 import { KeytarService, keytarServicePath } from '../common/keytar-protocol';
 import { KeytarServiceImpl } from './keytar-server';
+import { ContributionFilterRegistry, ContributionFilterRegistryImpl } from '../common/contribution-filter';
+import { EnvironmentUtils } from './environment-utils';
+import { ProcessUtils } from './process-utils';
 
 decorate(injectable(), ApplicationPackage);
 
@@ -101,4 +104,9 @@ export const backendApplicationModule = new ContainerModule(bind => {
     bind(ConnectionHandler).toDynamicValue(ctx =>
         new JsonRpcConnectionHandler(keytarServicePath, () => ctx.container.get<KeytarService>(KeytarService))
     ).inSingletonScope();
+
+    bind(ContributionFilterRegistry).to(ContributionFilterRegistryImpl).inSingletonScope();
+
+    bind(EnvironmentUtils).toSelf().inSingletonScope();
+    bind(ProcessUtils).toSelf().inSingletonScope();
 });

@@ -388,6 +388,10 @@ export class Position {
         }
         return false;
     }
+
+    toJSON(): any {
+        return { line: this.line, character: this.character };
+    }
 }
 
 export class Range {
@@ -519,6 +523,9 @@ export class Range {
             && Position.isPosition((<Range>thing).end);
     }
 
+    toJSON(): any {
+        return [this.start, this.end];
+    }
 }
 
 export class Selection extends Range {
@@ -1432,15 +1439,12 @@ export enum CommentThreadCollapsibleState {
     Expanded = 1
 }
 
-export interface QuickInputButton {
-    readonly iconPath: URI | { light: string | URI; dark: string | URI } | ThemeIcon;
-    readonly tooltip?: string | undefined;
-}
-
 export class QuickInputButtons {
-    static readonly Back: QuickInputButton = {
+    static readonly Back: theia.QuickInputButton = {
         iconPath: {
-            id: 'Back'
+            id: 'Back',
+            dark: '',
+            light: ''
         },
         tooltip: 'Back'
     };
